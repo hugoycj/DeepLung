@@ -39,7 +39,7 @@ class DataBowl3Detector(Dataset):
         print len(idcs)
         for idx in idcs:
             # print data_dir, idx
-            l = np.load(data_dir+idx+'_label.npy')
+            l = np.load(data_dir+idx+'_label.npy', allow_pickle=True)
             # print l, os.path.join(data_dir, '%s_label.npy' %idx)
             if np.all(l==0):
                 l=np.array([])

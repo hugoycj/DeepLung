@@ -23,7 +23,7 @@ from layers import acc
 parser = argparse.ArgumentParser(description='PyTorch DataBowl3 Detector')
 parser.add_argument('--model', '-m', metavar='MODEL', default='base',
                     help='model')
-parser.add_argument('--config', '-c', default='config_training', type=str)
+parser.add_argument('--config', '-c', default='config_training0', type=str)
 parser.add_argument('-j', '--workers', default=30, type=int, metavar='N',
                     help='number of data loading workers (default: 32)')
 parser.add_argument('--epochs', default=100, type=int, metavar='N',
@@ -62,7 +62,7 @@ def main():
     config_training = config_training.config
     # from config_training import config as config_training
     torch.manual_seed(0)
-    torch.cuda.set_device(0)
+    #torch.cuda.set_device(0)
 
     model = import_module(args.model)
     config, net, loss, get_pbb = model.get_model()
@@ -225,7 +225,8 @@ def train(data_loader, net, loss, epoch, optimizer, get_lr, save_freq, save_dir)
         loss_output[0].backward()
         optimizer.step()
 
-        loss_output[0] = loss_output[0].data[0]
+        #loss_output[0] = loss_output[0].data[0]
+        loss_output[0] = loss_output[0].item()
         metrics.append(loss_output)
 
     if epoch % args.save_freq == 0:            
@@ -273,7 +274,9 @@ def validate(data_loader, net, loss):
         output = net(data, coord)
         loss_output = loss(output, target, train = False)
 
-        loss_output[0] = loss_output[0].data[0]
+        # loss_output[0] = loss_output[0].data[0]
+        loss_output[0] = loss_output[0].item()
+
         metrics.append(loss_output)    
     end_time = time.time()
 
