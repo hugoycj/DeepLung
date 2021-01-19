@@ -2,7 +2,7 @@
 set -e
 
 # python prepare.py
-cd detector_py3
+cd detector
 maxeps=999
 f=0
 for (( i=1; i<=$maxeps; i+=1)) 

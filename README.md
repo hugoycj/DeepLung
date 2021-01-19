@@ -37,7 +37,11 @@ You should modify X from 0-9 to train 10 models for 10 fold cross validation
 You can modify -b(batch_size) depend on your GPU memory and number.
 
 For Testing
-python main.py --model dpn3d26 -b 1 --resume results/dpn3d26/retrft96X/CkptFile/1000.ckpt --test 1 --save-dir dpn3d26/retrft96X/ --config config_trainingX
+```
+python main.py --model dpn3d26 -b 1 --resume dpnmodel/fd0066.ckpt --test 1 --save-dir dpn3d26/retrft960/ --config config_training0
+```
+
+
 You should modify X from 0-9 to test 10 models for 10 fold cross validation
 mkdir in results/res18/retrft96X/val/#(X=0-9)
 mv results/res18/retrft96X/bbox/*.npy results/res18/retrft96X/val/

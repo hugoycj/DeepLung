@@ -5,7 +5,7 @@ import numpy as np
 import sys
 # sys.path.append('./')
 # import config_training
-from config_training import config 
+from config_training0 import config 
 # config = config_training.config
 from scipy.io import loadmat
 import numpy as np

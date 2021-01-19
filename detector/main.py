@@ -139,11 +139,15 @@ def main():
         print('len(testfilelist)',len(testfilelist))
     
         print('batch_size',args.batch_size)
+        # TODO: understand
         # margin = 32
-        margin = 16
+        # margin = 16
+        margin = 0
         # sidelen = 144
-        sidelen = 128
+        # sidelen = 128
         # sidelen = 208
+        sidelen = 96
+
         import data
         split_comber = SplitComb(sidelen,config['max_stride'],config['stride'],margin,config['pad_value'])
         dataset = data.DataBowl3Detector(
