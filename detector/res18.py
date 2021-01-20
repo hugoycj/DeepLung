@@ -1,6 +1,8 @@
 import torch
 from torch import nn
 from layers import *
+from torch.autograd import Variable
+
 
 config = {}
 config['anchors'] = [5., 10., 20.] #[ 10.0, 30.0, 60.]
@@ -125,10 +127,19 @@ class Net(nn.Module):
         
         return out#torch.Size([7, 24, 24, 24, 3, 5])
 
-    
 def get_model():
     net = Net()
     # print('Net----res18!', net)
     loss = Loss(config['num_hard'])
     get_pbb = GetPBB(config)
     return config, net, loss, get_pbb
+
+def test():
+    debug = True
+    net = Net()
+    x = Variable(torch.randn(1,1,96,96,96))
+    crd = Variable(torch.randn(1,3,24,24,24))
+    y = net(x, crd)
+    print(y.shape)
+
+test()
