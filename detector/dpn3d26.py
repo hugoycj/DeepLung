@@ -5,14 +5,15 @@ import torch.nn.functional as F
 from torch.autograd import Variable
 from layers import *
 config = {}
-config['anchors'] = [5., 10., 20.] #[ 10.0, 30.0, 60.]
+# config['anchors'] = [5., 10., 20.] #[ 10.0, 30.0, 60.]
+config['anchors'] = [ 10.0, 30.0, 60.]
 config['chanel'] = 1
 config['crop_size'] = [96, 96, 96]
 config['stride'] = 4
 config['max_stride'] = 16
 config['num_neg'] = 800
 config['th_neg'] = 0.02
-config['th_pos_train'] = 0.5
+config['th_pos_train'] = 0.4 #0.5
 config['th_pos_val'] = 1
 config['num_hard'] = 2
 config['bound_size'] = 12

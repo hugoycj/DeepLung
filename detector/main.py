@@ -21,9 +21,9 @@ from torch.autograd import Variable
 from layers import acc
 
 parser = argparse.ArgumentParser(description='PyTorch DataBowl3 Detector')
-parser.add_argument('--model', '-m', metavar='MODEL', default='base',
+parser.add_argument('--model', '-m', metavar='MODEL', default='3dfpn',
                     help='model')
-parser.add_argument('--config', '-c', default='config_training', type=str)
+parser.add_argument('--config', '-c', default = 'config_training0', type=str)
 parser.add_argument('-j', '--workers', default=30, type=int, metavar='N',
                     help='number of data loading workers (default: 32)')
 parser.add_argument('--epochs', default=100, type=int, metavar='N',
@@ -38,11 +38,11 @@ parser.add_argument('--momentum', default=0.9, type=float, metavar='M',
                     help='momentum')
 parser.add_argument('--weight-decay', '--wd', default=1e-4, type=float,
                     metavar='W', help='weight decay (default: 1e-4)')
-parser.add_argument('--save-freq', default='1', type=int, metavar='S',
+parser.add_argument('--save-freq', default='100', type=int, metavar='S',
                     help='save frequency')
 parser.add_argument('--resume', default='', type=str, metavar='PATH',
                     help='path to latest checkpoint (default: none)')
-parser.add_argument('--save-dir', default='', type=str, metavar='SAVE',
+parser.add_argument('--save-dir', default='fpn3d/cross0/', type=str, metavar='SAVE',
                     help='directory to save checkpoint (default: none)')
 parser.add_argument('--test', default=0, type=int, metavar='TEST',
                     help='1 do test evaluation, 0 not')
@@ -251,8 +251,12 @@ def train(data_loader, net, loss, epoch, optimizer, get_lr, save_freq, save_dir)
         data = Variable(data.cuda(), requires_grad=True)
         target = Variable(target.cuda())
         coord = Variable(coord.cuda(), requires_grad=True)
-
+        # print(data)
         output = net(data, coord)
+        if torch.isnan(output.mean()):
+            print("epoch:", epoch, "step", i, "'s value is nan!" )
+            continue
+        # print(output)
         # print('---------', data.size(),coord.size(),target.size(),output.size())#torch.Size([1, 1, 96, 96, 96]), torch.Size([1, 3, 24, 24, 24]), torch.Size([1, 24, 24, 24, 3, 5]), torch.Size([1, 24, 24, 24, 3, 5]))
         loss_output = loss(output, target)
         optimizer.zero_grad()

@@ -17,7 +17,7 @@ config['num_neg'] = 800
 config['th_neg'] = 0.02
 config['th_pos_train'] = 0.5
 config['th_pos_val'] = 1
-config['num_hard'] = 2
+config['num_hard'] = 10 #2
 config['bound_size'] = 12
 config['reso'] = 1
 config['sizelim'] = 2.5 #3 #6. #mm
@@ -29,9 +29,7 @@ config['pad_value'] = 170
 config['augtype'] = {'flip':True,'swap':False,'scale':True,'rotate':False}
 config['augtype'] = {'flip':True,'swap':False,'scale':True,'rotate':False}
 config['blacklist'] = ['868b024d9fa388b7ddab12ec1c06af38','990fbe3f0a1b53878669967b9afd1441','adc3bbc63d40f8761c59be10f1e504c3']
-debug = False #True #True#False #True
-
-
+debug = True #True#False #True
 
 
 ## Backbone
@@ -113,7 +111,7 @@ class BasicBlock(nn.Module):
         out = self.conv2(out)
         #conv2_rep = out
         out = self.bn2(out) #Out: [1, 64, 20, 20, 20]
-        print(out.shape)
+        # print(out.shape)
         if self.downsample is not None:
             residual = self.downsample(x)
 
@@ -193,7 +191,6 @@ class ResNet(nn.Module):
                 m.weight.data.fill_(1)
                 m.bias.data.zero_()
     
-    # TODO： fix resnet bug
     def _make_layer(self, block, planes, blocks, stride=1):
         downsample = None
         if stride != 1 or self.inplanes != planes * block.expansion:
@@ -333,7 +330,6 @@ class FeaturePyramid(nn.Module):
 
     def _upsample(self, original_feature, scaled_feature, scale_factor=2):
         depth, height, width = scaled_feature.size()[2:]
-        # TODO: Change to a not loss function
         return F.upsample(original_feature, scale_factor=scale_factor)[:, :, :depth, :height, :width]
 
     def _downsample(self, scale_factor=2):
@@ -341,14 +337,16 @@ class FeaturePyramid(nn.Module):
 
     def forward(self, x):
         resnet_feature_1, resnet_feature_2, resnet_feature_3, resnet_feature_4, resnet_feature_5 = self.resnet(x)
+        # print('resnet_feature_4 shape:', resnet_feature_4.shape)
+        # print('resnet_feature_5 shape:', resnet_feature_5.shape)
         # resnet_feature_1: [1, 64, 48, 48, 48]
         # resnet_feature_2: [1, 64, 24, 24, 24]
         # resnet_feature_3: [1, 128, 12, 12, 12]
-        # resnet_feature_4: [1, 256, 6, 6, 6]
-        # resnet_feature_5: [1, 512, 3, 3, 3]
-        print("input:", x.shape)
-        print("resnet_feature_4:", resnet_feature_5.shape)
-        print("resnet_feature_5:", resnet_feature_5.shape)
+        # resnet_feature_4: [1, 256, 6, 6, 6] for resnet34, [1, 1024, 6, 6, 6] for resnet50+
+        # resnet_feature_5: [1, 512, 3, 3, 3] for resnet34, [1, 2048, 6, 6, 6] for resnet50+
+        # print("input:", x.shape)
+        # print("resnet_feature_4:", resnet_feature_5.shape)
+        # print("resnet_feature_5:", resnet_feature_5.shape)
         pyramid_feature_5 = self.pyramid_transformation_5(resnet_feature_5)     # transform c5 to pyramid_c5
         pyramid_feature_4 = self.pyramid_transformation_4(resnet_feature_4)     # transform c4 to pyramid_c4
         pyramid_feature_3 = self.pyramid_transformation_3(resnet_feature_3)     # transform c3 to pyramid_c3
@@ -401,7 +399,7 @@ class FPN3D(nn.Module):
         'resnet152': resnet152
     }
 
-    def __init__(self, cfg, backbone='resnet18', num_classes=1, pretrained=False):
+    def __init__(self, cfg, backbone='resnet34', num_classes=1, pretrained=False):
         super(FPN3D, self).__init__()
         in_planes, out_planes = cfg['in_planes'], cfg['out_planes']
         num_blocks, dense_depth = cfg['num_blocks'], cfg['dense_depth']
@@ -415,12 +413,12 @@ class FPN3D(nn.Module):
 
     def forward(self, x, coord):
         pyramid_features = self.feature_pyramid(x)[0]
+        print(pyramid_features.shape)
         out = self.output(pyramid_features)
         size = out.size()
         out = out.view(out.size(0), out.size(1), -1)
         out = out.transpose(1, 2).contiguous().view(size[0], size[2], size[3], size[4], len(config['anchors']), 5)
         return out
-
 
 def get_model():
     cfg = {
@@ -438,9 +436,9 @@ def get_model():
 def test():
     debug = True
     _, net, _, _ = get_model()
-    x = Variable(torch.randn(1,1,96,96,96))
-    crd = Variable(torch.randn(1,3,24,24,24))
+    x = Variable(torch.randn(2,1,96,96,96), requires_grad=True)
+    crd = Variable(torch.randn(2,3,24,24,24), requires_grad=True)
     y = net(x, crd)
-    print(y.shape)
+    print(y)
 
 test()

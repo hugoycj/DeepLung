@@ -163,9 +163,9 @@ class Loss(nn.Module):
     def forward(self, output, labels, train = True):
         batch_size = labels.size(0)
         # print('loss',output.shape,labels.shape)#torch.Size([5, 24, 24, 24, 3, 5]) torch.Size([5, 24, 24, 24, 3, 5])
-        output = output.view(-1, 5)#将输出维度调整，以anchor为第二维度
+        output = output.view(-1, 5) #将输出维度调整，以anchor为第二维度
         labels = labels.view(-1, 5)
-        # print('loss',output.shape,labels.shape)#torch.Size([207360, 5]) torch.Size([207360, 5])
+        # print('loss',output.shape,labels.shape) #torch.Size([207360, 5]) torch.Size([207360, 5])
         
         pos_idcs = labels[:, 0] > 0.5#对标签进行筛选，输出为索引，示例[1,2,5],If an anchor overlaps a ground truth bounding box with the intersection over union (IoU) higher than 0.5, we consider it as a positive anchor
         pos_idcs = pos_idcs.unsqueeze(1).expand(pos_idcs.size(0), 5)#对索引维度扩展，重复5次，示例[[1,1,1,1,1],[2,2,2,2,2],[5,5,5,5,5]]
@@ -200,7 +200,10 @@ class Loss(nn.Module):
                 self.regress_loss(pd, ld)]
             # regress_losses_data = [l.data[0] for l in regress_losses]#torch0.3-0.1
             regress_losses_data = [l.item() for l in regress_losses]#torch1.0
-            classify_loss = 0.5 * self.classify_loss(#对正样本和负样本分别求分类损失
+            # classify_loss = 0.5 * self.classify_loss(#对正样本和负样本分别求分类损失
+            # pos_prob, pos_labels[:, 0]) + 0.5 * self.classify_loss(
+            # neg_prob, neg_labels + 1)
+            classify_loss = 2 * self.classify_loss(#对正样本和负样本分别求分类损失
             pos_prob, pos_labels[:, 0]) + 0.5 * self.classify_loss(
             neg_prob, neg_labels + 1)
             pos_correct = (pos_prob.data >= 0.5).sum()#那些输出确实大于0.5的正样本是正确预测的正样本
@@ -209,7 +212,7 @@ class Loss(nn.Module):
         else:#如果没有正标签，由于负标签又不用计算回归损失，于是回归损失就置零了，分类损失只计算负标签的分类损失
             regress_losses = [0,0,0,0]
             classify_loss =  0.5 * self.classify_loss(
-            neg_prob, neg_labels + 1)
+                                        neg_prob, neg_labels + 1)
             pos_correct = 0 #此时没有正样本或正标签
             pos_total = 0#总数也为0
             regress_losses_data = [0,0,0,0]
