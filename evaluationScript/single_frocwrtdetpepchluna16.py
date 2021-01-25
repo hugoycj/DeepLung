@@ -14,19 +14,22 @@ trainnum = 66
 annotations_filename = '/home/hugoycj/Database/Dataset/LUNA16/prepare_for_deeplung_py3/subset{}/annotations{}.csv'.format(fold, fold) # path for ground truth annotations for the fold
 annotations_excluded_filename = '/home/hugoycj/Database/Dataset/LUNA16/CSVFILES/annotations_excluded.csv'  # path for excluded annotations for the fold
 seriesuids_filename = '/home/hugoycj/Database/Dataset/LUNA16/prepare_for_deeplung_py3/subset{}/seriesids{}.csv'.format(fold, fold) # path for seriesuid for the fold
-results_path = '../detector/results/dpn3d26/retrft96' + str(fold) + '/val'#val' #val' ft96'+'/val'#
-print("result path", results_path)
+results_path = '../detector/results/fpn3d/retrft96' + str(fold) + '/val300'#val' #val' ft96'+'/val'#
+# results_path = '../detector/results/dpn3d26/retrft96' + str(fold) + '/val90'#val' #val' ft96'+'/val'#
 sideinfopath = '/home/hugoycj/Database/Dataset/LUNA16/prepare_for_deeplung_py3/subset'+str(fold)+'/'
 datapath = '/home/hugoycj/Database/Dataset/LUNA16/subset'+str(fold)+'/'
-maxeps = 995 #03 #150 #100#100
-
+maxeps = 100 #03 #150 #100#100
+eps = [1, ]
 # eps = range(1, maxeps+1, 1)#6,7,1)#5,151,5)#5,151,5)#76,77,1)#40,41,1)#76,77,1)#1,101,1)#17,18,1)#38,39,1)#1, maxeps+1, 1) #maxeps+1, 1)
-eps = range(995, maxeps+1, 1)#6,7,1)#5,151,5)#5,151,5)#76,77,1)#40,41,1)#76,77,1)#1,101,1)#17,18,1)#38,39,1)#1, maxeps+1, 1) #maxeps+1, 1)
-detp = [-1.5, -1]#, -0.5, 0]#, 0.5, 1]#, 0.5, 1] #range(-1, 0, 1)
+# eps = range(995, maxeps+1, 1)#6,7,1)#5,151,5)#5,151,5)#76,77,1)#40,41,1)#76,77,1)#1,101,1)#17,18,1)#38,39,1)#1, maxeps+1, 1) #maxeps+1, 1)
+# detp = [-1.5, -1]#, -0.5, 0]#, 0.5, 1]#, 0.5, 1] #range(-1, 0, 1)
+detp = [-0.5]
+
+
 # detp = [-1]#, -0.5, 0]#, 0.5, 1]#, 0.5, 1] #range(-1, 0, 1)
 isvis = False #True
 nmsthresh = 0.1
-nprocess = 38#4
+nprocess = 8 #4
 use_softnms = False
 frocarr = np.zeros((maxeps, len(detp)))
 firstline = ['seriesuid', 'coordX', 'coordY', 'coordZ', 'probability']
@@ -131,11 +134,12 @@ def getfrocvalue(results_filename):
 p = Pool(nprocess)
 #结果就是每一个epoch都生成一个csv文件，存放80多个测试病例的预测结节位置及概率
 def getcsv(detp, eps):#给定阈值和epoch
+    print("getting csv")
     for ep in eps:#针对每个epoch
         # bboxpath = results_path + str(ep) + '/'#找到每个epoch的路径
         bboxpath = results_path + '/'
+        print('bbox path: ', bboxpath)
         for detpthresh in detp:
-            print('ep', ep, 'detp', detpthresh, bboxpath)
             f = open(bboxpath + 'predanno'+ str(detpthresh) + '.csv', 'w')#根据阈值分别创建与之对应的文件
             fwriter = csv.writer(f)
             fwriter.writerow(firstline)#写入第一行，包括用户id,结节坐标x,y,z,结节概率p
@@ -158,7 +162,7 @@ def getcsv(detp, eps):#给定阈值和epoch
                     # print row
                     fwriter.writerow(row)
             f.close()
-# getcsv(detp, eps)
+getcsv(detp, eps)
 # print(stop)
 def getfroc(detp, eps):
     maxfroc = 0
@@ -175,6 +179,7 @@ def getfroc(detp, eps):
         # print('predannofnamalist',predannofnamalist)#['/public/share/jiezhao/Minerva/Lung/DeepLung-master/detector_py3/results/dpn3d26/retrft960/val199/predanno-1.5.csv', '/public/share/jiezhao/Minerva/Lung/DeepLung-master/detector_py3/results/dpn3d26/retrft960/val199/predanno-1.csv']
 
         froclist = p.map(getfrocvalue, predannofnamalist)#调用getfrocvalue求取froc值
+        print(froclist)
         # print('maxfroc0', ep, max(froclist))
         # print('max(froclist)',froclist)
         if maxfroc < max(froclist):
@@ -182,8 +187,8 @@ def getfroc(detp, eps):
             maxfroc = max(froclist)
         # print('maxfroc1',maxfroc)
         # Since there is only one epoch, print one froc is enough
-        for detpthresh in detp:
-            print(froclist[int((detpthresh-detp[0])/(detp[1]-detp[0]))])
+        # for detpthresh in detp:
+        #     print(froclist[int((detpthresh-detp[0])/(detp[1]-detp[0]))])
             # print((ep-eps[0])//(eps[1]-eps[0]), int((detpthresh-detp[0])/(detp[1]-detp[0])))
             # print((ep-eps[0])/(eps[1]-eps[0]), int((detpthresh-detp[0])/(detp[1]-detp[0])))
             # frocarr[(ep-eps[0])//(eps[1]-eps[0]), int((detpthresh-detp[0])/(detp[1]-detp[0]))] = froclist[int((detpthresh-detp[0])/(detp[1]-detp[0]))]
