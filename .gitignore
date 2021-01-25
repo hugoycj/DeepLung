@@ -112,3 +112,14 @@ evaluationScript/*.png
 detector/dpnmodel/*
 detector/resmodel/*
 
+detector/results/dpn3d26/retrft96/*
+detector/results/dpn3d26/retrft96X/*
+
+
+# Result
+detector/results/*
+evaluationScript/outputDir/*
+
+# Log
+nohup.out
+*/nohup.out
