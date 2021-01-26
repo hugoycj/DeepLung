@@ -203,7 +203,7 @@ class Loss(nn.Module):
             # classify_loss = 0.5 * self.classify_loss(#对正样本和负样本分别求分类损失
             # pos_prob, pos_labels[:, 0]) + 0.5 * self.classify_loss(
             # neg_prob, neg_labels + 1)
-            classify_loss = 2 * self.classify_loss(#对正样本和负样本分别求分类损失
+            classify_loss = 0.5 * self.classify_loss(#对正样本和负样本分别求分类损失
             pos_prob, pos_labels[:, 0]) + 0.5 * self.classify_loss(
             neg_prob, neg_labels + 1)
             pos_correct = (pos_prob.data >= 0.5).sum()#那些输出确实大于0.5的正样本是正确预测的正样本

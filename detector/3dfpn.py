@@ -169,6 +169,7 @@ class ResNet(nn.Module):
         layers: number of repeated layers in four conv region, eg. [2,2,2,2] for resnet18
         '''
         self.inplanes = 64
+        print('Resnet input layers:', layers)
         super(ResNet, self).__init__()
         self.conv1 = nn.Conv3d(1, 64, kernel_size=5, stride=2, padding=2,   
                                bias=False)             # 128 -> 64
@@ -281,37 +282,52 @@ def resnet152(pretrained=False, **kwargs):
     return model
 
 class FeaturePyramid(nn.Module):
-    def __init__(self, resnet):
+    def __init__(self, resnet, inplanes, outplanes):
+        '''
+        Args:
+            resnet: backbone module
+            inplanes: eg.[]
+        '''
         super(FeaturePyramid, self).__init__()
         self.resnet = resnet
-
+        '''
+        resnet_feature_1: [1, 64, 48, 48, 48]
+        resnet_feature_2: [1, 64, 24, 24, 24]
+        resnet_feature_3: [1, 128, 12, 12, 12]
+        resnet_feature_4: [1, 256, 6, 6, 6] for resnet34, [1, 1024, 6, 6, 6] for resnet50+
+        resnet_feature_5: [1, 512, 3, 3, 3] for resnet34, [1, 2048, 6, 6, 6] for resnet50+
+        '''
+        outplanes = [256, 256, 512, 1024, 2048]
         # applied in a pyramid
         # self.pyramid_transformation_1 = conv3x3x3(64, 256, padding=1)
-        self.pyramid_transformation_1 = conv3x3x3(64, 256)
-        self.pyramid_transformation_2 = conv1x1x1(64, 64)
-        self.pyramid_transformation_3 = conv1x1x1(128, 128)
-        self.pyramid_transformation_4 = conv1x1x1(256, 256)
-        self.pyramid_transformation_5 = conv1x1x1(512, 512)
+        self.pyramid_transformation_1 = conv3x3x3(64, outplanes[0])
+        self.pyramid_transformation_2 = conv1x1x1(outplanes[1], outplanes[1])
+        self.pyramid_transformation_3 = conv1x1x1(outplanes[2], outplanes[2])
+        # self.pyramid_transformation_4 = conv1x1x1(256, 256)
+        self.pyramid_transformation_4 = conv1x1x1(outplanes[3], outplanes[3])
+        # self.pyramid_transformation_5 = conv1x1x1(512, 512)
+        self.pyramid_transformation_5 = conv1x1x1(outplanes[4], outplanes[4])
+
 
         # applied after upsampling and before adding to calculate pyramid_feature_2
-        self.pyramid_transformation_512_to_64 = conv1x1x1(512, 64)
-        self.pyramid_transformation_256_to_64 = conv1x1x1(256, 64)
-        self.pyramid_transformation_128_to_64 = conv1x1x1(128, 64)
+        self.pyramid_transformation_512_to_64 = conv1x1x1(outplanes[4], outplanes[1])
+        self.pyramid_transformation_256_to_64 = conv1x1x1(outplanes[3], outplanes[1])
+        self.pyramid_transformation_128_to_64 = conv1x1x1(outplanes[2], outplanes[1])
 
         # applied after upsampling and before adding to calculate pyramid_feature_3
-        self.pyramid_transformation_512_to_128 = conv1x1x1(512, 128)
-        self.pyramid_transformation_256_to_128 = conv1x1x1(256, 128)
-        self.pyramid_transformation_64_to_128 = conv1x1x1(64, 128)
+        self.pyramid_transformation_512_to_128 = conv1x1x1(outplanes[4], outplanes[2])
+        self.pyramid_transformation_256_to_128 = conv1x1x1(outplanes[3], outplanes[2])
+        self.pyramid_transformation_64_to_128 = conv1x1x1(outplanes[1], outplanes[2])
         
         # applied after upsampling and before adding to calculate pyramid_feature_4
-        self.pyramid_transformation_512_to_256 = conv1x1x1(512, 256)
-        self.pyramid_transformation_128_to_256 = conv1x1x1(128, 256)
-        self.pyramid_transformation_64_to_256 = conv1x1x1(64, 256)
+        self.pyramid_transformation_512_to_256 = conv1x1x1(outplanes[4], outplanes[3])
+        self.pyramid_transformation_128_to_256 = conv1x1x1(outplanes[2], outplanes[3])
+        self.pyramid_transformation_64_to_256 = conv1x1x1(outplanes[1], outplanes[3])
 
         # applied after upsampling and before adding to calculate pyramid_feature_5
-        self.pyramid_transformation_256_to_512 = conv1x1x1(256, 512)
-        self.pyramid_transformation_128_to_512 = conv1x1x1(128, 512)
-        self.pyramid_transformation_64_to_512 = conv1x1x1(64, 512)
+        self.pyramid_transformation_256_to_512 = conv1x1x1(outplanes[3], outplanes[4])
+        self.pyramid_transformation_128_to_512 = conv1x1x1(outplanes[2], outplanes[4])
+        self.pyramid_transformation_64_to_512 = conv1x1x1(outplanes[1], outplanes[4])
 
         # applied downsample
         self.downsample_c2_to_c5 = self._downsample(8)
@@ -322,10 +338,10 @@ class FeaturePyramid(nn.Module):
         self.downsample_c2_to_c3 = self._downsample(2)
 
         # applied after gathering
-        self.upsample_transform_2 = conv3x3x3(64, 256, padding=1)
-        self.upsample_transform_3 = conv3x3x3(128, 256, padding=1)
-        self.upsample_transform_4 = conv3x3x3(256, 256, padding=1)
-        self.upsample_transform_5 = conv3x3x3(512, 256, padding=1)
+        self.upsample_transform_2 = conv3x3x3(outplanes[0], outplanes[3], padding=1)
+        self.upsample_transform_3 = conv3x3x3(outplanes[2], outplanes[3], padding=1)
+        self.upsample_transform_4 = conv3x3x3(outplanes[3], outplanes[3], padding=1)
+        self.upsample_transform_5 = conv3x3x3(outplanes[4], outplanes[3], padding=1)
 
 
     def _upsample(self, original_feature, scaled_feature, scale_factor=2):
@@ -337,13 +353,6 @@ class FeaturePyramid(nn.Module):
 
     def forward(self, x):
         resnet_feature_1, resnet_feature_2, resnet_feature_3, resnet_feature_4, resnet_feature_5 = self.resnet(x)
-        # print('resnet_feature_4 shape:', resnet_feature_4.shape)
-        # print('resnet_feature_5 shape:', resnet_feature_5.shape)
-        # resnet_feature_1: [1, 64, 48, 48, 48]
-        # resnet_feature_2: [1, 64, 24, 24, 24]
-        # resnet_feature_3: [1, 128, 12, 12, 12]
-        # resnet_feature_4: [1, 256, 6, 6, 6] for resnet34, [1, 1024, 6, 6, 6] for resnet50+
-        # resnet_feature_5: [1, 512, 3, 3, 3] for resnet34, [1, 2048, 6, 6, 6] for resnet50+
         # print("input:", x.shape)
         # print("resnet_feature_4:", resnet_feature_5.shape)
         # print("resnet_feature_5:", resnet_feature_5.shape)
@@ -399,21 +408,21 @@ class FPN3D(nn.Module):
         'resnet152': resnet152
     }
 
-    def __init__(self, cfg, backbone='resnet34', num_classes=1, pretrained=False):
+    def __init__(self, cfg, backbone='resnet101', num_classes=1, pretrained=False):
         super(FPN3D, self).__init__()
-        in_planes, out_planes = cfg['in_planes'], cfg['out_planes']
+        in_planes, out_planes = cfg['in_planes'], cfg['out_planes'] # Inplanes filter number and ouput planes filter number
         num_blocks, dense_depth = cfg['num_blocks'], cfg['dense_depth']
 
         self.backbone_net = FPN3D.backbones[backbone](pretrained=pretrained)
-        self.feature_pyramid = FeaturePyramid(self.backbone_net)
-        self.output = nn.Sequential(nn.Conv3d(256, 64, kernel_size = 1),
+        self.feature_pyramid = FeaturePyramid(self.backbone_net, in_planes, out_planes)
+        self.output = nn.Sequential(nn.Conv3d(1024, 64, kernel_size = 1),
                                     nn.ReLU(),
                                     nn.Dropout3d(p = 0.3),
                                     nn.Conv3d(64, 5 * len(config['anchors']), kernel_size = 1))
 
     def forward(self, x, coord):
         pyramid_features = self.feature_pyramid(x)[0]
-        print(pyramid_features.shape)
+        # print(pyramid_features.shape)
         out = self.output(pyramid_features)
         size = out.size()
         out = out.view(out.size(0), out.size(1), -1)
@@ -441,4 +450,4 @@ def test():
     y = net(x, crd)
     print(y)
 
-test()
+# test()
