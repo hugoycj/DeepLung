@@ -8,7 +8,7 @@ f=0
 for (( i=1; i<=$maxeps; i+=1)) 
 do
     echo "process $i epoch"
-	
+
 	if [ $i -lt 10 ]; then
 	    python main.py --model dpn3d26 -b 1 --resume results/dpn3d26/retrft96$f/CkptFile/00$i.ckpt --test 1 --save-dir dpn3d26/retrft96$f/ --config config_trainingpy3$f --gpu=0
 	elif [ $i -lt 100 ]; then 
